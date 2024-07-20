@@ -96,7 +96,7 @@ local function createTabScreen()
     centerCorner.CornerRadius = UDim.new(0, 10)
     centerCorner.Parent = centerFrame
 
-    local function createActionButton(text, position)
+    local function createActionButton(text, position, action)
         local button = Instance.new("TextButton")
         button.Size = UDim2.new(0.2, 0, 0.2, 0)
         button.Position = position
@@ -112,10 +112,33 @@ local function createTabScreen()
         buttonCorner.CornerRadius = UDim.new(0, 10)
         buttonCorner.Parent = button
 
+        button.MouseButton1Click:Connect(action)
+
         return button
     end
 
-    local actionButton1 = createActionButton("Action 1", UDim2.new(0.1, 0, 0.1, 0))
+    local function enableFlight()
+        local character = player.Character
+        if not character then return end
+
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then return end
+
+        humanoid.PlatformStand = true
+        local flying = Instance.new("BodyVelocity")
+        flying.Name = "Flying"
+        flying.Velocity = Vector3.new(0, 0, 0)
+        flying.MaxForce = Vector3.new(4000, 4000, 4000)
+        flying.P = 1250
+        flying.Parent = character.PrimaryPart
+
+        -- Disable flying after 10 seconds (or you can adjust this)
+        task.wait(10)
+        flying:Destroy()
+        humanoid.PlatformStand = false
+    end
+
+    local actionButton1 = createActionButton("Action 1", UDim2.new(0.1, 0, 0.1, 0), enableFlight)
     local actionButton2 = createActionButton("Action 2", UDim2.new(0.1, 0, 0.4, 0))
     local actionButton3 = createActionButton("Action 3", UDim2.new(0.1, 0, 0.7, 0))
 
