@@ -2,7 +2,7 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
 -- Create the main window
-local Window = Library.CreateLib("Toast Hub FF2", "GrapeTheme")
+local Window = Library.CreateLib("Toast Hub Universal Free", "GrapeTheme")
 
 -- Create "Movement" tab
 local MovementTab = Window:NewTab("Movement")
@@ -132,12 +132,14 @@ local isBoxing = false
 local isMouseTargeting = false
 local beams = {}
 local boxes = {}
+local playerBoxes = {}  -- Track boxes associated with players
 
 -- Function to update beams and boxes
 local function updateBeamsAndBoxes()
     local player = game.Players.LocalPlayer
     local character = player.Character
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    local playerTeam = player.Team
 
     if character and humanoidRootPart then
         -- Clear existing beams and boxes
@@ -150,50 +152,61 @@ local function updateBeamsAndBoxes()
         end
         boxes = {}
 
-        -- Create beams and purple boxes to every player
+        -- Clear player boxes
+        for _, box in pairs(playerBoxes) do
+            box:Destroy()
+        end
+        playerBoxes = {}
+
+        -- Create beams and purple boxes to players not on the same team
         for _, otherPlayer in pairs(game.Players:GetPlayers()) do
             if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 local otherHumanoidRootPart = otherPlayer.Character.HumanoidRootPart
+                local otherPlayerTeam = otherPlayer.Team
 
-                if isBeaming then
-                    -- Create a Beam instance
-                    local beam = Instance.new("Beam")
-                    beam.Parent = workspace
+                -- Check if the other player is not on the same team
+                if otherPlayerTeam ~= playerTeam then
+                    if isBeaming then
+                        -- Create a Beam instance
+                        local beam = Instance.new("Tracers")
+                        beam.Parent = workspace
 
-                    -- Create Attachments for the Beam
-                    local attachment0 = Instance.new("Attachment")
-                    local attachment1 = Instance.new("Attachment")
-                    attachment0.Parent = humanoidRootPart
-                    attachment1.Parent = otherHumanoidRootPart
+                        -- Create Attachments for the Beam
+                        local attachment0 = Instance.new("Attachment")
+                        local attachment1 = Instance.new("Attachment")
+                        attachment0.Parent = humanoidRootPart
+                        attachment1.Parent = otherHumanoidRootPart
 
-                    -- Configure the Beam
-                    beam.Attachment0 = attachment0
-                    beam.Attachment1 = attachment1
-                    beam.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
-                    beam.Width0 = 0.2
-                    beam.Width1 = 0.2
-                    beam.Segments = 10
-                    table.insert(beams, beam)
-                end
+                        -- Configure the Beam
+                        beam.Attachment0 = attachment0
+                        beam.Attachment1 = attachment1
+                        beam.Color = ColorSequence.new(Color3.fromRGB(163, 97, 191))
+                        beam.Width0 = 0.2
+                        beam.Width1 = 0.2
+                        beam.Segments = 10
+                        table.insert(beams, beam)
+                    end
 
-                if isBoxing then
-                    -- Create a purple box at the end of the beam
-                    local box = Instance.new("Part")
-                    box.Size = Vector3.new(5, 5, 1)
-                    box.Position = otherHumanoidRootPart.Position
-                    box.Anchored = true
-                    box.CanCollide = false
-                    box.BrickColor = BrickColor.new("Royal purple")
-                    box.Material = Enum.Material.SmoothPlastic
-                    box.Transparency = 0.5
-                    box.Parent = workspace
-                    -- Set the box to follow the player
-                    game:GetService("RunService").RenderStepped:Connect(function()
-                        if isBoxing then
-                            box.Position = otherHumanoidRootPart.Position
-                        end
-                    end)
-                    table.insert(boxes, box)
+                    if isBoxing then
+                        -- Create a purple box at the end of the beam
+                        local box = Instance.new("Part")
+                        box.Size = Vector3.new(5, 5, 1)
+                        box.Position = otherHumanoidRootPart.Position
+                        box.Anchored = true
+                        box.CanCollide = false
+                        box.BrickColor = BrickColor.new("Royal purple")
+                        box.Material = Enum.Material.SmoothPlastic
+                        box.Transparency = 0.5
+                        box.Parent = workspace
+                        -- Set the box to follow the player
+                        game:GetService("RunService").RenderStepped:Connect(function()
+                            if isBoxing then
+                                box.Position = otherHumanoidRootPart.Position
+                            end
+                        end)
+                        table.insert(boxes, box)
+                        playerBoxes[otherPlayer] = box
+                    end
                 end
             end
         end
@@ -216,14 +229,18 @@ end
 local function setupMouseTargeting()
     local player = game.Players.LocalPlayer
     local mouse = player:GetMouse()
-    local screenGui = Instance.new("ScreenGui", player.PlayerGui)
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0, 10, 0, 10)
-    indicator.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    indicator.Visible = false
-    indicator.Parent = screenGui
 
-    local function updateIndicator()
+    local function lockOnToPlayer(targetPlayer)
+        local character = player.Character
+        local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+        local targetHead = targetPlayer.Character:FindFirstChild("Head")
+
+        if humanoidRootPart and targetHead then
+            humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, targetHead.Position)
+        end
+    end
+
+    local function updateMouseTarget()
         local closestPlayer = nil
         local shortestDistance = math.huge
 
@@ -232,7 +249,7 @@ local function setupMouseTargeting()
             if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 local otherHumanoidRootPart = otherPlayer.Character.HumanoidRootPart
                 local screenPoint = workspace.CurrentCamera:WorldToScreenPoint(otherHumanoidRootPart.Position)
-                local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).magnitude
+                local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
 
                 if distance < shortestDistance then
                     shortestDistance = distance
@@ -241,30 +258,23 @@ local function setupMouseTargeting()
             end
         end
 
-        -- Update indicator position if a closest player is found
+        -- Lock on to the closest player
         if closestPlayer then
-            local closestHead = closestPlayer.Character:FindFirstChild("Head")
-            if closestHead then
-                local headScreenPoint = workspace.CurrentCamera:WorldToScreenPoint(closestHead.Position)
-                indicator.Position = UDim2.new(0, headScreenPoint.X - 5, 0, headScreenPoint.Y - 5)
-                indicator.Visible = true
-            end
-        else
-            indicator.Visible = false
+            lockOnToPlayer(closestPlayer)
         end
     end
 
-    -- Update the indicator every frame if mouse targeting is enabled
+    -- Update the mouse targeting every frame
     game:GetService("RunService").RenderStepped:Connect(function()
         if isMouseTargeting then
-            updateIndicator()
+            updateMouseTarget()
         end
     end)
 
     -- Handle right mouse button click
     mouse.Button2Down:Connect(function()
         if isMouseTargeting then
-            updateIndicator()
+            updateMouseTarget()
         end
     end)
 end
@@ -272,13 +282,19 @@ end
 -- Initialize mouse targeting setup
 setupMouseTargeting()
 
--- Add a toggle for beams
-AimingSection:NewToggle("Beams", "Toggle Beams to All Players", function(state)
+-- Add toggles to the "Aiming" tab
+AimingSection:NewToggle("Tracers", "Toggle Beams to All Players", function(state)
     toggleBeams(state)
 end)
 
--- Add a toggle for boxes around players
-AimingSection:NewToggle("Boxes", "Toggle Boxes Around Players", function(state)
+AimingSection:NewToggle("ESP", "Toggle Boxes Around Players", function(state)
     toggleBoxes(state)
 end)
 
+-- Handle player joining and leaving with faster updates
+local function onPlayerChange()
+    updateBeamsAndBoxes()
+end
+
+game.Players.PlayerAdded:Connect(onPlayerChange)
+game.Players.PlayerRemoving:Connect(onPlayerChange)
