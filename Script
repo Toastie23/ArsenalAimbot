@@ -1,167 +1,164 @@
-local TweenService = game:GetService("TweenService")
 local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MainScreen"
-screenGui.Parent = player:WaitForChild("PlayerGui")
+local team = player.Team
+local camera = game.Workspace.CurrentCamera
+local mouse = player:GetMouse()
+local isRightClicking = false
+local lineThickness = 0.1  -- Thickness of the line
+local players = game.Players:GetPlayers()
 
--- Main Screen Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0.6, 0, 0.6, 0)
-mainFrame.Position = UDim2.new(0.2, 0, 0.2, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark grey
-mainFrame.BackgroundTransparency = 0
-mainFrame.BorderSizePixel = 0
-mainFrame.ClipsDescendants = true
-mainFrame.Parent = screenGui
+-- Function to create a line from one position to another
+local function createLine(fromPosition, toPosition)
+    local line = Instance.new("Part")
+    line.Anchored = true
+    line.CanCollide = false
+    line.BrickColor = BrickColor.new("Bright red")
+    line.Material = Enum.Material.SmoothPlastic
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 15)
-corner.Parent = mainFrame
-
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0.1, 0)
-titleBar.BackgroundColor3 = Color3.fromRGB(50, 0, 80)  -- Dark purple
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 1, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
-titleLabel.Text = "App Title"
-titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextStrokeTransparency = 0.5
-titleLabel.Parent = titleBar
-
-local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, 0, 0.9, 0)
-contentFrame.Position = UDim2.new(0, 0, 0.1, 0)
-contentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Slightly lighter grey
-contentFrame.BorderSizePixel = 0
-contentFrame.Parent = mainFrame
-
-local contentCorner = Instance.new("UICorner")
-contentCorner.CornerRadius = UDim.new(0, 10)
-contentCorner.Parent = contentFrame
-
-local welcomeLabel = Instance.new("TextLabel")
-welcomeLabel.Size = UDim2.new(1, 0, 0.2, 0)
-welcomeLabel.Position = UDim2.new(0, 0, 0.4, 0)
-welcomeLabel.BackgroundTransparency = 1
-welcomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
-welcomeLabel.Text = "Welcome to the App!"
-welcomeLabel.TextScaled = true
-welcomeLabel.Font = Enum.Font.Gotham
-welcomeLabel.TextStrokeTransparency = 0.5
-welcomeLabel.Parent = contentFrame
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0.3, 0, 0.1, 0)
-button.Position = UDim2.new(0.35, 0, 0.7, 0)
-button.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Purple
-button.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
-button.Text = "Go to Tabs"
-button.TextScaled = true
-button.Font = Enum.Font.GothamBold
-button.BorderSizePixel = 0
-button.Parent = contentFrame
-
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 10)
-buttonCorner.Parent = button
-
--- Create the new screen with tabs and small buttons
-local function createTabScreen()
-    local tabScreen = Instance.new("Frame")
-    tabScreen.Size = mainFrame.Size  -- Same size as mainFrame
-    tabScreen.Position = mainFrame.Position  -- Same position as mainFrame
-    tabScreen.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- Dark grey
-    tabScreen.BorderSizePixel = 0
-    tabScreen.Visible = false  -- Initially hidden
-    tabScreen.Parent = screenGui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 15)
-    corner.Parent = tabScreen
-
-    local centerFrame = Instance.new("Frame")
-    centerFrame.Size = UDim2.new(0.8, 0, 0.8, 0)
-    centerFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
-    centerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Slightly lighter grey
-    centerFrame.BorderSizePixel = 0
-    centerFrame.Parent = tabScreen
-
-    local centerCorner = Instance.new("UICorner")
-    centerCorner.CornerRadius = UDim.new(0, 10)
-    centerCorner.Parent = centerFrame
-
-    local function createActionButton(text, position, action)
-        local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0.2, 0, 0.2, 0)
-        button.Position = position
-        button.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Purple
-        button.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text
-        button.Text = text
-        button.TextScaled = true
-        button.Font = Enum.Font.GothamBold
-        button.BorderSizePixel = 0
-        button.Parent = centerFrame
-
-        local buttonCorner = Instance.new("UICorner")
-        buttonCorner.CornerRadius = UDim.new(0, 10)
-        buttonCorner.Parent = button
-
-        button.MouseButton1Click:Connect(action)
-
-        return button
-    end
-
-    local function enableFlight()
-        local character = player.Character
-        if not character then return end
-
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if not humanoid then return end
-
-        humanoid.PlatformStand = true
-        local flying = Instance.new("BodyVelocity")
-        flying.Name = "Flying"
-        flying.Velocity = Vector3.new(0, 0, 0)
-        flying.MaxForce = Vector3.new(4000, 4000, 4000)
-        flying.P = 1250
-        flying.Parent = character.PrimaryPart
-
-        -- Disable flying after 10 seconds (or you can adjust this)
-        task.wait(10)
-        flying:Destroy()
-        humanoid.PlatformStand = false
-    end
-
-    local actionButton1 = createActionButton("Flight", UDim2.new(0.1, 0, 0.1, 0), enableFlight)
-    local actionButton2 = createActionButton("Action 2", UDim2.new(0.1, 0, 0.4, 0))
-    local actionButton3 = createActionButton("Action 3", UDim2.new(0.1, 0, 0.7, 0))
-
-    return tabScreen
+    local distance = (fromPosition - toPosition).magnitude
+    line.Size = Vector3.new(lineThickness, lineThickness, distance)
+    
+    line.CFrame = CFrame.new(fromPosition, toPosition) * CFrame.new(0, 0, -distance / 2)
+    line.Parent = workspace
+    
+    -- Automatically clean up after 10 seconds
+    game:GetService("Debris"):AddItem(line, 10)
 end
 
-local function onButtonClick()
-    local tabScreen = createTabScreen()
+-- Function to update lines
+local function updateLines()
+    -- Clear existing lines
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj:IsA("Part") and obj.BrickColor == BrickColor.new("Bright red") then
+            obj:Destroy()
+        end
+    end
 
-    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-    local mainFrameTweenGoal = {Size = UDim2.new(0, 0, 0, 0)}
-    local tabScreenTweenGoal = {Size = UDim2.new(0.6, 0, 0.6, 0)}
+    -- Get player's position for feet
+    local character = player.Character
+    if not character then return end
 
-    local mainFrameTween = TweenService:Create(mainFrame, tweenInfo, mainFrameTweenGoal)
-    local tabScreenTween = TweenService:Create(tabScreen, tweenInfo, tabScreenTweenGoal)
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return end
 
-    mainFrameTween:Play()
-    tabScreenTween:Play()
+    local fromPosition = humanoidRootPart.Position - Vector3.new(0, 2, 0)  -- Position slightly below the feet
 
-    mainFrameTween.Completed:Connect(function()
-        mainFrame.Visible = false
-        tabScreen.Visible = true
-    end)
+    -- Iterate through all players
+    for _, otherPlayer in pairs(players) do
+        if otherPlayer ~= player and otherPlayer.Team ~= team then
+            local otherCharacter = otherPlayer.Character
+            if otherCharacter then
+                local otherHead = otherCharacter:FindFirstChild("Head")
+                if otherHead then
+                    createLine(fromPosition, otherHead.Position)
+                end
+            end
+        end
+    end
 end
 
-button.MouseButton1Click:Connect(onButtonClick)
+-- Function to instantly move the camera to the target position
+local function moveCameraToTarget(targetPosition)
+    camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition) * CFrame.new(0, 0, -10)  -- Adjust distance as needed
+end
+
+-- Function to find the player closest to the mouse pointer
+local function getTargetPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+
+    local mousePosition = mouse.Hit.p
+    for _, otherPlayer in pairs(players) do
+        if otherPlayer ~= player and otherPlayer.Team ~= team then
+            local otherCharacter = otherPlayer.Character
+            if otherCharacter then
+                local otherHead = otherCharacter:FindFirstChild("Head")
+                if otherHead then
+                    local screenPosition, onScreen = camera:WorldToScreenPoint(otherHead.Position)
+                    if onScreen then
+                        local distance = (mousePosition - otherHead.Position).magnitude
+                        if distance < shortestDistance then
+                            closestPlayer = otherPlayer
+                            shortestDistance = distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+-- Function to fire a bullet
+local function fireBullet()
+    local rayOrigin = camera.CFrame.Position
+    local rayDirection = (mouse.Hit.p - rayOrigin).unit * 1000  -- Adjust range as needed
+
+    -- Create a ray
+    local ray = Ray.new(rayOrigin, rayDirection)
+    local hitPart, hitPosition = workspace:FindPartOnRay(ray, player.Character, false, true)
+
+    if hitPart then
+        -- Check if the hit object is a player
+        local hitCharacter = hitPart.Parent
+        local hitPlayer = game.Players:GetPlayerFromCharacter(hitCharacter)
+
+        if hitPlayer then
+            print("Hit player: " .. hitPlayer.Name)
+            -- You can add code here to deal damage to the hitPlayer
+        end
+    end
+end
+
+-- Update camera and lines based on mouse input
+local function updateCameraAndLines()
+    while true do
+        if isRightClicking then
+            local targetPlayer = getTargetPlayer()
+            if targetPlayer then
+                local head = targetPlayer.Character:FindFirstChild("Head")
+                if head then
+                    moveCameraToTarget(head.Position)
+                end
+            end
+        end
+        updateLines()
+        wait(0.1)  -- Small wait to reduce performance impact
+    end
+end
+
+-- Detect right-click input to start shooting
+mouse.Button1Down:Connect(function()
+    if not shooting then
+        shooting = true
+        fireBullet()
+        shooting = false
+    end
+end)
+
+-- Detect right-click input to control camera
+mouse.Button2Down:Connect(function()
+    isRightClicking = true
+end)
+
+mouse.Button2Up:Connect(function()
+    isRightClicking = false
+end)
+
+-- Detect new players joining
+game.Players.PlayerAdded:Connect(function(newPlayer)
+    table.insert(players, newPlayer)
+end)
+
+-- Detect players leaving
+game.Players.PlayerRemoving:Connect(function(leavingPlayer)
+    for i, p in ipairs(players) do
+        if p == leavingPlayer then
+            table.remove(players, i)
+            break
+        end
+    end
+end)
+
+-- Start the camera and lines update loop
+updateCameraAndLines()
