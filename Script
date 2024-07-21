@@ -20,13 +20,28 @@ local function createLine(fromPosition, toPosition)
     line.CFrame = CFrame.new(fromPosition, toPosition) * CFrame.new(0, 0, -distance / 2)
     line.Parent = workspace
     
+    -- Create a box at the end of the line
+    local box = Instance.new("BillboardGui")
+    box.Size = UDim2.new(1, 0, 1, 0)
+    box.Adornee = line
+    box.StudsOffset = Vector3.new(0, 0, -distance)
+    box.AlwaysOnTop = true
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 0.5
+    frame.BackgroundColor3 = Color3.new(1, 0, 0)
+    frame.Parent = box
+    
+    box.Parent = line
+    
     -- Automatically clean up after 10 seconds
     game:GetService("Debris"):AddItem(line, 10)
 end
 
 -- Function to update lines
 local function updateLines()
-    -- Clear existing lines
+    -- Clear existing lines and boxes
     for _, obj in pairs(workspace:GetChildren()) do
         if obj:IsA("Part") and obj.BrickColor == BrickColor.new("Bright red") then
             obj:Destroy()
