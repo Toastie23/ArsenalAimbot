@@ -1,179 +1,324 @@
-local player = game.Players.LocalPlayer
-local team = player.Team
-local camera = game.Workspace.CurrentCamera
-local mouse = player:GetMouse()
-local isRightClicking = false
-local lineThickness = 0.1  -- Thickness of the line
-local players = game.Players:GetPlayers()
+-- Create a new ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Function to create a line from one position to another
-local function createLine(fromPosition, toPosition)
-    local line = Instance.new("Part")
-    line.Anchored = true
-    line.CanCollide = false
-    line.BrickColor = BrickColor.new("Bright red")
-    line.Material = Enum.Material.SmoothPlastic
+-- Create a frame to hold the buttons
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 400)
+frame.Position = UDim2.new(0.5, -200, 0.5, -200) -- Center of the screen
+frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White
+frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Visible = false -- Start as hidden
+frame.Parent = screenGui
 
-    local distance = (fromPosition - toPosition).magnitude
-    line.Size = Vector3.new(lineThickness, lineThickness, distance)
+-- Add a UI corner to create rounded corners
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 16)
+uiCorner.Parent = frame
+
+-- Add a UI stroke to create a border
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(0, 255, 0) -- Green
+uiStroke.Thickness = 2
+uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+uiStroke.Parent = frame
+
+-- Add a shadow effect to the frame
+local shadow = Instance.new("Frame")
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shadow.BackgroundTransparency = 0.5
+shadow.ZIndex = frame.ZIndex - 1
+shadow.Parent = frame
+
+-- Create a title label at the top of the frame
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 50) -- Full width and 50 pixels tall
+titleLabel.Position = UDim2.new(0, 0, 0, 0) -- Top of the frame
+titleLabel.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
+titleLabel.Text = "Toast Hub Free"
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextStrokeTransparency = 0.5
+titleLabel.Parent = frame
+
+-- Function to create a button
+local function createButton(name, position, size)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Position = UDim2.new(0.5, position.X, 0.5, position.Y)
+    button.Size = UDim2.new(0, size.X, 0, size.Y)
+    button.AnchorPoint = Vector2.new(0.5, 0.5)
+    button.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
+    button.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
+    button.Text = name
+    button.TextScaled = true
+    button.Font = Enum.Font.GothamBold
+    button.Parent = frame
+
+    -- Add rounded corners to buttons
+    local buttonUICorner = Instance.new("UICorner")
+    buttonUICorner.CornerRadius = UDim.new(0, 12)
+    buttonUICorner.Parent = button
     
-    line.CFrame = CFrame.new(fromPosition, toPosition) * CFrame.new(0, 0, -distance / 2)
-    line.Parent = workspace
-    
-    -- Create a box at the end of the line
-    local box = Instance.new("BillboardGui")
-    box.Size = UDim2.new(1, 0, 1, 0)
-    box.Adornee = line
-    box.StudsOffset = Vector3.new(0, 0, -distance)
-    box.AlwaysOnTop = true
-    
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.BackgroundTransparency = 0.5
-    frame.BackgroundColor3 = Color3.new(1, 0, 0)
-    frame.Parent = box
-    
-    box.Parent = line
-    
-    -- Automatically clean up after 10 seconds
-    game:GetService("Debris"):AddItem(line, 10)
+    return button
 end
 
--- Function to update lines
-local function updateLines()
-    -- Clear existing lines and boxes
-    for _, obj in pairs(workspace:GetChildren()) do
-        if obj:IsA("Part") and obj.BrickColor == BrickColor.new("Bright red") then
-            obj:Destroy()
+-- Create five buttons with varying positions and sizes
+local buttonSize = Vector2.new(360, 60)
+local button1 = createButton("Toggle Beams", Vector2.new(0, -120), buttonSize)
+local button2 = createButton("Toggle Boxes", Vector2.new(0, -50), buttonSize)
+local button3 = createButton("Fly", Vector2.new(0, 20), buttonSize)
+local button4 = createButton("Run Faster", Vector2.new(0, 90), buttonSize)
+createButton("Button 5", Vector2.new(0, 160), buttonSize)
+
+-- Create a button to toggle the visibility of the GUI
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 100, 0, 50)
+toggleButton.Position = UDim2.new(1, -110, 1, -60) -- Bottom-right corner
+toggleButton.AnchorPoint = Vector2.new(1, 1)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
+toggleButton.Text = "Open/Close"
+toggleButton.TextScaled = true
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.Parent = screenGui
+
+-- Function to toggle the visibility of the frame
+local function toggleGui()
+    frame.Visible = not frame.Visible
+end
+
+-- Connect the toggle button to the toggle function
+toggleButton.MouseButton1Click:Connect(toggleGui)
+
+-- Draggable functionality for the main frame
+local dragging, dragInput, dragStart, startPos
+
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if dragging and dragInput then
+        updateInput(dragInput)
+    end
+end)
+
+-- Beam management
+local beams = {}
+local beamsEnabled = false
+local beamsConnection
+
+local function createCylinderBeam(startPart, endPart)
+    local beam = Instance.new("Part")
+    beam.Size = Vector3.new(0.2, (endPart.Position - startPart.Position).magnitude, 0.2)
+    beam.Anchored = true
+    beam.CanCollide = false
+    beam.BrickColor = BrickColor.new("Bright blue")
+    beam.Material = Enum.Material.Neon
+    beam.Parent = workspace
+    beam.CFrame = CFrame.new(startPart.Position:Lerp(endPart.Position, 0.5), endPart.Position) * CFrame.Angles(math.pi/2, 0, 0)
+    return beam
+end
+
+local function updateBeams()
+    for _, beam in pairs(beams) do
+        beam:Destroy()
+    end
+    beams = {}
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local startPart = character.HumanoidRootPart
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local endPart = p.Character.HumanoidRootPart
+                if p.Team ~= player.Team then
+                    local beam = createCylinderBeam(startPart, endPart)
+                    table.insert(beams, beam)
+                end
+            end
         end
     end
+end
 
-    -- Get player's position for feet
+local function toggleBeams()
+    beamsEnabled = not beamsEnabled
+    if beamsEnabled then
+        beamsConnection = game:GetService("RunService").RenderStepped:Connect(updateBeams)
+    else
+        if beamsConnection then
+            beamsConnection:Disconnect()
+            beamsConnection = nil
+        end
+        for _, beam in pairs(beams) do
+            beam:Destroy()
+        end
+        beams = {}
+    end
+end
+
+button1.MouseButton1Click:Connect(toggleBeams)
+
+-- Box management
+local boxes = {}
+local boxesEnabled = false
+local boxesConnection
+
+local function createBoxAroundPlayer(player)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local humanoidRootPart = player.Character.HumanoidRootPart
+        local box = Instance.new("BoxHandleAdornment")
+        box.Size = Vector3.new(4, 6, 4)
+        box.Adornee = humanoidRootPart
+        box.AlwaysOnTop = true
+        box.ZIndex = 10
+        box.Transparency = 0.5
+        box.Color3 = Color3.new(0, 0, 1) -- Blue
+        box.Parent = humanoidRootPart
+        
+        table.insert(boxes, box)
+    end
+end
+
+local function updateBoxes()
+    for _, box in pairs(boxes) do
+        box:Destroy()
+    end
+    boxes = {}
+
+    local player = game.Players.LocalPlayer
     local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local startPart = character.HumanoidRootPart
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                if p.Team ~= player.Team then
+                    createBoxAroundPlayer(p)
+                end
+            end
+        end
+    end
+end
+
+local function toggleBoxes()
+    boxesEnabled = not boxesEnabled
+    if boxesEnabled then
+        boxesConnection = game:GetService("RunService").RenderStepped:Connect(updateBoxes)
+    else
+        if boxesConnection then
+            boxesConnection:Disconnect()
+            boxesConnection = nil
+        end
+        for _, box in pairs(boxes) do
+            box:Destroy()
+        end
+        boxes = {}
+    end
+end
+
+button2.MouseButton1Click:Connect(toggleBoxes)
+
+-- Fly functionality
+local flyEnabled = false
+local flySpeed = 50
+local bodyVelocity
+
+local function toggleFly()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+
     if not character then return end
 
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return end
+    flyEnabled = not flyEnabled
 
-    local fromPosition = humanoidRootPart.Position - Vector3.new(0, 2, 0)  -- Position slightly below the feet
+    if flyEnabled then
+        bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
 
-    -- Iterate through all players
-    for _, otherPlayer in pairs(players) do
-        if otherPlayer ~= player and otherPlayer.Team ~= team then
-            local otherCharacter = otherPlayer.Character
-            if otherCharacter then
-                local otherHead = otherCharacter:FindFirstChild("Head")
-                if otherHead then
-                    createLine(fromPosition, otherHead.Position)
+        game:GetService("RunService").Stepped:Connect(function()
+            if flyEnabled then
+                local moveDirection = Vector3.new()
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + workspace.CurrentCamera.CFrame.LookVector
                 end
-            end
-        end
-    end
-end
-
--- Function to instantly move the camera to the target position
-local function moveCameraToTarget(targetPosition)
-    camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition) * CFrame.new(0, 0, -10)  -- Adjust distance as needed
-end
-
--- Function to find the player closest to the mouse pointer
-local function getTargetPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-
-    local mousePosition = mouse.Hit.p
-    for _, otherPlayer in pairs(players) do
-        if otherPlayer ~= player and otherPlayer.Team ~= team then
-            local otherCharacter = otherPlayer.Character
-            if otherCharacter then
-                local otherHead = otherCharacter:FindFirstChild("Head")
-                if otherHead then
-                    local screenPosition, onScreen = camera:WorldToScreenPoint(otherHead.Position)
-                    if onScreen then
-                        local distance = (mousePosition - otherHead.Position).magnitude
-                        if distance < shortestDistance then
-                            closestPlayer = otherPlayer
-                            shortestDistance = distance
-                        end
-                    end
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - workspace.CurrentCamera.CFrame.LookVector
                 end
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
--- Function to fire a bullet
-local function fireBullet()
-    local rayOrigin = camera.CFrame.Position
-    local rayDirection = (mouse.Hit.p - rayOrigin).unit * 1000  -- Adjust range as needed
-
-    -- Create a ray
-    local ray = Ray.new(rayOrigin, rayDirection)
-    local hitPart, hitPosition = workspace:FindPartOnRay(ray, player.Character, false, true)
-
-    if hitPart then
-        -- Check if the hit object is a player
-        local hitCharacter = hitPart.Parent
-        local hitPlayer = game.Players:GetPlayerFromCharacter(hitCharacter)
-
-        if hitPlayer then
-            print("Hit player: " .. hitPlayer.Name)
-            -- You can add code here to deal damage to the hitPlayer
-        end
-    end
-end
-
--- Update camera and lines based on mouse input
-local function updateCameraAndLines()
-    while true do
-        if isRightClicking then
-            local targetPlayer = getTargetPlayer()
-            if targetPlayer then
-                local head = targetPlayer.Character:FindFirstChild("Head")
-                if head then
-                    moveCameraToTarget(head.Position)
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - workspace.CurrentCamera.CFrame.RightVector
                 end
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + workspace.CurrentCamera.CFrame.RightVector
+                end
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftControl) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                bodyVelocity.Velocity = moveDirection * flySpeed
+            else
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
             end
+        end)
+    else
+        if bodyVelocity then
+            bodyVelocity:Destroy()
+            bodyVelocity = nil
         end
-        updateLines()
-        wait(0.1)  -- Small wait to reduce performance impact
     end
 end
 
--- Detect right-click input to start shooting
-mouse.Button1Down:Connect(function()
-    if not shooting then
-        shooting = true
-        fireBullet()
-        shooting = false
-    end
-end)
+button3.MouseButton1Click:Connect(toggleFly)
 
--- Detect right-click input to control camera
-mouse.Button2Down:Connect(function()
-    isRightClicking = true
-end)
+-- Run Faster functionality
+local speedEnabled = false
+local normalSpeed = 16
+local fastSpeed = 100
 
-mouse.Button2Up:Connect(function()
-    isRightClicking = false
-end)
+local function toggleSpeed()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local humanoid = character and character:FindFirstChild("Humanoid")
 
--- Detect new players joining
-game.Players.PlayerAdded:Connect(function(newPlayer)
-    table.insert(players, newPlayer)
-end)
-
--- Detect players leaving
-game.Players.PlayerRemoving:Connect(function(leavingPlayer)
-    for i, p in ipairs(players) do
-        if p == leavingPlayer then
-            table.remove(players, i)
-            break
+    if humanoid then
+        speedEnabled = not speedEnabled
+        if speedEnabled then
+            humanoid.WalkSpeed = fastSpeed
+        else
+            humanoid.WalkSpeed = normalSpeed
         end
     end
-end)
+end
 
--- Start the camera and lines update loop
-updateCameraAndLines()
+button4.MouseButton1Click:Connect(toggleSpeed)
