@@ -10,7 +10,7 @@ frame.Position = UDim2.new(0.5, -200, 0.5, -200) -- Center of the screen
 frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White
 frame.BorderSizePixel = 0
 frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.Visible = false -- Start as hidden
+frame.Visible = true -- Make the frame visible by default
 frame.Parent = screenGui
 
 -- Add a UI corner to create rounded corners
@@ -74,28 +74,7 @@ local button1 = createButton("Toggle Beams", Vector2.new(0, -120), buttonSize)
 local button2 = createButton("Toggle Boxes", Vector2.new(0, -50), buttonSize)
 local button3 = createButton("Fly", Vector2.new(0, 20), buttonSize)
 local button4 = createButton("Run Faster", Vector2.new(0, 90), buttonSize)
-createButton("Button 5", Vector2.new(0, 160), buttonSize)
-
--- Create a button to toggle the visibility of the GUI
-local toggleButton = Instance.new("TextButton")
-toggleButton.Name = "ToggleButton"
-toggleButton.Size = UDim2.new(0, 100, 0, 50)
-toggleButton.Position = UDim2.new(1, -110, 1, -60) -- Bottom-right corner
-toggleButton.AnchorPoint = Vector2.new(1, 1)
-toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White
-toggleButton.Text = "Open/Close"
-toggleButton.TextScaled = true
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.Parent = screenGui
-
--- Function to toggle the visibility of the frame
-local function toggleGui()
-    frame.Visible = not frame.Visible
-end
-
--- Connect the toggle button to the toggle function
-toggleButton.MouseButton1Click:Connect(toggleGui)
+local button5 = createButton("High Jump", Vector2.new(0, 160), buttonSize)
 
 -- Draggable functionality for the main frame
 local dragging, dragInput, dragStart, startPos
@@ -322,3 +301,25 @@ local function toggleSpeed()
 end
 
 button4.MouseButton1Click:Connect(toggleSpeed)
+
+-- High Jump functionality
+local jumpEnabled = false
+local normalJumpPower = 50
+local highJumpPower = 100
+
+local function toggleHighJump()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local humanoid = character and character:FindFirstChild("Humanoid")
+
+    if humanoid then
+        jumpEnabled = not jumpEnabled
+        if jumpEnabled then
+            humanoid.JumpPower = highJumpPower
+        else
+            humanoid.JumpPower = normalJumpPower
+        end
+    end
+end
+
+button5.MouseButton1Click:Connect(toggleHighJump)
